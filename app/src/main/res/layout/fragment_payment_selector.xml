@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp">
+
+    <TextView
+        android:id="@+id/optionCash"
+        style="@style/TextAppearance.Material3.TitleLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawablePadding="16dp"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp"
+        android:text="Cash"
+        android:drawableStart="@drawable/ic_cash"
+        tools:ignore="UseAppTint" />
+
+    <TextView
+        android:id="@+id/optionCredit"
+        style="@style/TextAppearance.Material3.TitleLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawablePadding="16dp"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp"
+        android:text="Credit Card"
+        android:drawableStart="@drawable/ic_credit_card"
+        tools:ignore="UseAppTint" />
+
+    <TextView
+        android:id="@+id/optionUpi"
+        style="@style/TextAppearance.Material3.TitleLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawablePadding="16dp"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp"
+        android:text="UPI"
+        android:drawableStart="@drawable/ic_upi"
+        tools:ignore="UseAppTint" />
+
+</LinearLayout>

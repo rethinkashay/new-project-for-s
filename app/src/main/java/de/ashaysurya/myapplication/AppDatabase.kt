@@ -1,3 +1,4 @@
+// File: AppDatabase.kt
 package de.ashaysurya.myapplication
 
 import android.content.Context
@@ -5,20 +6,27 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import java.util.Date
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
-// CORRECTED: Only one @Database annotation with all entities and the new version
-@Database(entities = [MenuItem::class, Order::class, OrderItem::class], version = 2, exportSchema = false)
-@TypeConverters(Converters::class) // This will show an error until we create the file
+// 1. Change version from 2 to 3
+@Database(entities = [MenuItem::class, Order::class, OrderItem::class], version = 3, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun menuItemDao(): MenuItemDao
-    // We will create this DAO in the next step
     abstract fun orderDao(): OrderDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        // 2. Define the Migration object to safely add the new column
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE orders ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'CASH'")
+            }
+        }
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -27,8 +35,9 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "restaurant_database"
                 )
-                    // CORRECTED: Add this line to handle the version change
-                    .fallbackToDestructiveMigration()
+                    // 3. REMOVE .fallbackToDestructiveMigration()
+                    // 4. ADD the new safe migration instead
+                    .addMigrations(MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

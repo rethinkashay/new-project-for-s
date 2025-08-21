@@ -1,3 +1,4 @@
+// File: PosViewModel.kt
 package de.ashaysurya.myapplication
 
 import android.app.Application
@@ -5,32 +6,34 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class PosViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: OrderRepository
 
-    // LiveData holding all menu items from the database.
     val allMenuItems: LiveData<List<MenuItem>>
 
-    // LiveData holding the items in the current order (MenuItem to Quantity).
     private val _currentOrder = MutableLiveData<MutableMap<MenuItem, Int>>(mutableMapOf())
     val currentOrder: LiveData<MutableMap<MenuItem, Int>> = _currentOrder
 
-    // LiveData holding the calculated total of the current order.
     private val _totalAmount = MutableLiveData(0.0)
     val totalAmount: LiveData<Double> = _totalAmount
+
+    // NEW: StateFlow to hold the selected payment method. Starts as null to force a selection.
+    private val _selectedPaymentMethod = MutableStateFlow<PaymentMethod?>(null)
+    val selectedPaymentMethod: StateFlow<PaymentMethod?> = _selectedPaymentMethod.asStateFlow()
 
     init {
         val database = AppDatabase.getDatabase(application)
         repository = OrderRepository(database.menuItemDao(), database.orderDao())
         allMenuItems = repository.allMenuItems
+        setPaymentMethod(PaymentMethod.CASH) // Set a default payment method
     }
 
-    /**
-     * Adds a selected menu item to the current order or increments its quantity.
-     */
     fun addItemToOrder(menuItem: MenuItem) {
         val order = _currentOrder.value ?: mutableMapOf()
         val quantity = order[menuItem] ?: 0
@@ -39,28 +42,36 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
         calculateTotal()
     }
 
-    /**
-     * Calculates the total amount of the current order and updates the LiveData.
-     */
     private fun calculateTotal() {
         val order = _currentOrder.value ?: return
         val total = order.entries.sumOf { (item, quantity) -> item.price * quantity }
         _totalAmount.value = total
     }
 
+    // NEW: Function to update the payment method from the UI.
+    fun setPaymentMethod(method: PaymentMethod) {
+        _selectedPaymentMethod.value = method
+    }
+
     /**
-     * Finalizes the sale by saving the order to the database.
+     * UPDATED: Finalizes the sale using the selected payment method.
+     * @return `true` if the sale was successful, `false` if no payment method was selected.
      */
-    fun finalizeSale() {
-        viewModelScope.launch {
-            _currentOrder.value?.let {
-                if (it.isNotEmpty()) {
-                    repository.insertOrder(it)
-                    // Clear the current order after saving
-                    _currentOrder.postValue(mutableMapOf())
-                    _totalAmount.postValue(0.0)
-                }
-            }
+    fun finalizeSale(): Boolean {
+        val paymentMethod = _selectedPaymentMethod.value
+        val currentOrderItems = _currentOrder.value
+
+        // A sale cannot be finalized without a payment method or items.
+        if (paymentMethod == null || currentOrderItems.isNullOrEmpty()) {
+            return false
         }
+
+        viewModelScope.launch {
+            repository.insertOrder(currentOrderItems, paymentMethod)
+            // Clear the current order after saving
+            _currentOrder.postValue(mutableMapOf())
+            _totalAmount.postValue(0.0)
+        }
+        return true
     }
 }
