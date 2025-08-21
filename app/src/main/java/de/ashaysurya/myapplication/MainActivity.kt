@@ -39,19 +39,20 @@ class MainActivity : AppCompatActivity() {
             showAddItemDialog()
         }
 
-        // --- CORRECTED: Setup for the "Go to POS" Button ---
-        // This code now lives inside the onCreate method where it belongs.
+        // --- THIS IS THE MISSING CODE FOR YOUR BUTTONS ---
         val goToPosButton = findViewById<Button>(R.id.buttonGoToPos)
         goToPosButton.setOnClickListener {
             val intent = Intent(this, PosActivity::class.java)
             startActivity(intent)
         }
+
         val goToDashboardButton = findViewById<Button>(R.id.buttonGoToDashboard)
         goToDashboardButton.setOnClickListener {
             val intent = Intent(this, DashboardActivity::class.java)
             startActivity(intent)
         }
     }
+
     private fun showOptionsDialog(menuItem: MenuItem) {
         val options = arrayOf("Edit", "Delete")
         AlertDialog.Builder(this)
@@ -82,15 +83,14 @@ class MainActivity : AppCompatActivity() {
                 if (name.isNotEmpty() && priceString.isNotEmpty()) {
                     val price = priceString.toDoubleOrNull()
                     if (price != null) {
+                        // We use .copy() to create a new object with the same ID
                         val updatedItem = menuItem.copy(name = name, price = price)
                         menuViewModel.update(updatedItem)
                     }
                 }
                 dialog.dismiss()
             }
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -125,9 +125,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 dialog.dismiss()
             }
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 }
