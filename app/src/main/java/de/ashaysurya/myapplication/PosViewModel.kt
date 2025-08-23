@@ -1,6 +1,6 @@
 // File: PosViewModel.kt
 package de.ashaysurya.myapplication
-
+import androidx.lifecycle.map
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -11,11 +11,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+// NEW: A sealed class to represent the different types of items in our list.
+// This allows our list to contain both Headers and MenuItems.
+sealed class DataItem {
+    data class MenuItemWrapper(val menuItem: MenuItem) : DataItem()
+    data class HeaderWrapper(val categoryName: String) : DataItem()
+}
+
 class PosViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: OrderRepository
+    private val allMenuItems: LiveData<List<MenuItem>>
 
-    val allMenuItems: LiveData<List<MenuItem>>
+    // NEW: This LiveData will hold our transformed list with headers.
+    val groupedMenuItems: LiveData<List<DataItem>>
 
     private val _currentOrder = MutableLiveData<MutableMap<MenuItem, Int>>(mutableMapOf())
     val currentOrder: LiveData<MutableMap<MenuItem, Int>> = _currentOrder
@@ -23,7 +32,6 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
     private val _totalAmount = MutableLiveData(0.0)
     val totalAmount: LiveData<Double> = _totalAmount
 
-    // NEW: StateFlow to hold the selected payment method. Starts as null to force a selection.
     private val _selectedPaymentMethod = MutableStateFlow<PaymentMethod?>(null)
     val selectedPaymentMethod: StateFlow<PaymentMethod?> = _selectedPaymentMethod.asStateFlow()
 
@@ -31,7 +39,24 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
         val database = AppDatabase.getDatabase(application)
         repository = OrderRepository(database.menuItemDao(), database.orderDao())
         allMenuItems = repository.allMenuItems
-        setPaymentMethod(PaymentMethod.CASH) // Set a default payment method
+        setPaymentMethod(PaymentMethod.CASH)
+
+        // The magic happens here! We observe the flat list from the database
+        // and transform it into a grouped list with headers.
+            groupedMenuItems = allMenuItems.map { items ->
+            val groupedList = mutableListOf<DataItem>()
+            // Group the flat list by the 'category' property.
+            val itemsByCategory = items.groupBy { it.category }
+
+            // Loop through each category and its items to build the final list.
+            for ((category, menuItems) in itemsByCategory) {
+                groupedList.add(DataItem.HeaderWrapper(category)) // Add the header
+                menuItems.forEach { menuItem ->
+                    groupedList.add(DataItem.MenuItemWrapper(menuItem)) // Add the items under that header
+                }
+            }
+            groupedList
+        }
     }
 
     fun addItemToOrder(menuItem: MenuItem) {
@@ -48,27 +73,20 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
         _totalAmount.value = total
     }
 
-    // NEW: Function to update the payment method from the UI.
     fun setPaymentMethod(method: PaymentMethod) {
         _selectedPaymentMethod.value = method
     }
 
-    /**
-     * UPDATED: Finalizes the sale using the selected payment method.
-     * @return `true` if the sale was successful, `false` if no payment method was selected.
-     */
     fun finalizeSale(): Boolean {
         val paymentMethod = _selectedPaymentMethod.value
         val currentOrderItems = _currentOrder.value
 
-        // A sale cannot be finalized without a payment method or items.
         if (paymentMethod == null || currentOrderItems.isNullOrEmpty()) {
             return false
         }
 
         viewModelScope.launch {
             repository.insertOrder(currentOrderItems, paymentMethod)
-            // Clear the current order after saving
             _currentOrder.postValue(mutableMapOf())
             _totalAmount.postValue(0.0)
         }

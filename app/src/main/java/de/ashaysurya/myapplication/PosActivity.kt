@@ -11,7 +11,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import de.ashaysurya.myapplication.databinding.ActivityPosBinding
 import kotlinx.coroutines.launch
-
+private const val ITEM_VIEW_TYPE_HEADER = 0
+private const val ITEM_VIEW_TYPE_ITEM = 1
 // 1. Implement the listener interface from our fragment
 class PosActivity : AppCompatActivity(), PaymentMethodSelectorFragment.PaymentMethodSelectionListener {
 
@@ -33,8 +34,19 @@ class PosActivity : AppCompatActivity(), PaymentMethodSelectorFragment.PaymentMe
 
         // --- Setup RecyclerViews using ViewBinding ---
         binding.recyclerViewMenu.adapter = menuAdapter
-        binding.recyclerViewMenu.layoutManager = GridLayoutManager(this, 3)
-
+        val layoutManager = GridLayoutManager(this, 2)
+        layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+            override fun getSpanSize(position: Int): Int {
+                // If the item is a header, it spans all 3 columns.
+                // Otherwise, it's a menu item and spans 1 column.
+                return when (menuAdapter.getItemViewType(position)) {
+                    ITEM_VIEW_TYPE_HEADER -> 2
+                    ITEM_VIEW_TYPE_ITEM -> 1
+                    else -> 1
+                }
+            }
+        }
+        binding.recyclerViewMenu.layoutManager = layoutManager
         binding.recyclerViewOrder.adapter = orderAdapter
         binding.recyclerViewOrder.layoutManager = LinearLayoutManager(this)
 
@@ -51,10 +63,9 @@ class PosActivity : AppCompatActivity(), PaymentMethodSelectorFragment.PaymentMe
     }
 
     private fun observeViewModel(menuAdapter: MenuGridAdapter, orderAdapter: OrderListAdapter) {
-        posViewModel.allMenuItems.observe(this) { items ->
+        posViewModel.groupedMenuItems.observe(this) { items ->
             items?.let { menuAdapter.submitList(it) }
         }
-
         posViewModel.currentOrder.observe(this) { order ->
             order?.let {
                 orderAdapter.submitList(it.toList())

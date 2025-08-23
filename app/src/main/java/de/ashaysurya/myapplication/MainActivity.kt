@@ -1,3 +1,4 @@
+// File: MainActivity.kt
 package de.ashaysurya.myapplication
 
 import android.content.Intent
@@ -5,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -39,7 +41,7 @@ class MainActivity : AppCompatActivity() {
             showAddItemDialog()
         }
 
-        // --- THIS IS THE MISSING CODE FOR YOUR BUTTONS ---
+        // --- Setup Navigation Buttons ---
         val goToPosButton = findViewById<Button>(R.id.buttonGoToPos)
         goToPosButton.setOnClickListener {
             val intent = Intent(this, PosActivity::class.java)
@@ -71,24 +73,31 @@ class MainActivity : AppCompatActivity() {
         val dialogLayout = LayoutInflater.from(this).inflate(R.layout.dialog_add_item, null)
         val editTextName = dialogLayout.findViewById<EditText>(R.id.editTextName)
         val editTextPrice = dialogLayout.findViewById<EditText>(R.id.editTextPrice)
+        val editTextCategory = dialogLayout.findViewById<EditText>(R.id.editTextCategory)
 
         editTextName.setText(menuItem.name)
         editTextPrice.setText(menuItem.price.toString())
+        editTextCategory.setText(menuItem.category)
 
         builder.setTitle("Edit Menu Item")
             .setView(dialogLayout)
             .setPositiveButton("Save") { dialog, _ ->
                 val name = editTextName.text.toString().trim()
                 val priceString = editTextPrice.text.toString().trim()
-                if (name.isNotEmpty() && priceString.isNotEmpty()) {
+                val category = editTextCategory.text.toString().trim()
+
+                if (name.isNotEmpty() && priceString.isNotEmpty() && category.isNotEmpty()) {
                     val price = priceString.toDoubleOrNull()
                     if (price != null) {
-                        // We use .copy() to create a new object with the same ID
-                        val updatedItem = menuItem.copy(name = name, price = price)
+                        val updatedItem = menuItem.copy(name = name, price = price, category = category)
                         menuViewModel.update(updatedItem)
+                        dialog.dismiss()
+                    } else {
+                        Toast.makeText(this, "Please enter a valid price", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show()
                 }
-                dialog.dismiss()
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -110,20 +119,27 @@ class MainActivity : AppCompatActivity() {
         val dialogLayout = LayoutInflater.from(this).inflate(R.layout.dialog_add_item, null)
         val editTextName = dialogLayout.findViewById<EditText>(R.id.editTextName)
         val editTextPrice = dialogLayout.findViewById<EditText>(R.id.editTextPrice)
+        val editTextCategory = dialogLayout.findViewById<EditText>(R.id.editTextCategory)
 
         builder.setTitle("Add New Menu Item")
             .setView(dialogLayout)
             .setPositiveButton("Add") { dialog, _ ->
                 val name = editTextName.text.toString().trim()
                 val priceString = editTextPrice.text.toString().trim()
-                if (name.isNotEmpty() && priceString.isNotEmpty()) {
+                val category = editTextCategory.text.toString().trim()
+
+                if (name.isNotEmpty() && priceString.isNotEmpty() && category.isNotEmpty()) {
                     val price = priceString.toDoubleOrNull()
                     if (price != null) {
-                        val newItem = MenuItem(name = name, price = price)
+                        val newItem = MenuItem(name = name, price = price, category = category)
                         menuViewModel.insert(newItem)
+                        dialog.dismiss()
+                    } else {
+                        Toast.makeText(this, "Please enter a valid price", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show()
                 }
-                dialog.dismiss()
             }
             .setNegativeButton("Cancel", null)
             .show()

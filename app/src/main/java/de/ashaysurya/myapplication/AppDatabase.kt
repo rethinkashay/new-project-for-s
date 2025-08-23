@@ -9,8 +9,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-// 1. Change version from 2 to 3
-@Database(entities = [MenuItem::class, Order::class, OrderItem::class], version = 3, exportSchema = false)
+@Database(entities = [MenuItem::class, Order::class, OrderItem::class], version = 4, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
@@ -21,10 +20,17 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        // 2. Define the Migration object to safely add the new column
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE orders ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'CASH'")
+            }
+        }
+
+        // UPDATED: This migration now only adds the category column.
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE menu_items ADD COLUMN category TEXT NOT NULL DEFAULT 'Default'")
+                // The line to add the 'stock' column has been removed.
             }
         }
 
@@ -35,9 +41,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "restaurant_database"
                 )
-                    // 3. REMOVE .fallbackToDestructiveMigration()
-                    // 4. ADD the new safe migration instead
                     .addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_3_4)
                     .build()
                 INSTANCE = instance
                 instance

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:baselineAligned="false"
-    android:background="#EFEFEF"
+    android:background="#F5F5F5"
     android:orientation="horizontal"
     tools:context=".PosActivity">
 
@@ -15,7 +15,7 @@
         android:layout_height="match_parent"
         android:layout_weight="2"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:spanCount="3"
+        app:spanCount="2"
         tools:listitem="@layout/grid_item_menu" />
 
     <com.google.android.material.card.MaterialCardView
@@ -23,8 +23,10 @@
         android:layout_height="match_parent"
         android:layout_margin="8dp"
         android:layout_weight="1"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp">
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#E0E0E0"
+        app:strokeWidth="1dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -37,15 +39,18 @@
                 android:layout_height="wrap_content"
                 android:text="Current Order"
                 android:textAppearance="?attr/textAppearanceTitleLarge"
+                android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonFinalizeSale"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:paddingVertical="12dp"
                 android:text="Finalize Sale"
+                android:textSize="16sp"
+                app:cornerRadius="24dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -54,7 +59,7 @@
                 android:id="@+id/layoutTotal"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="16dp"
                 android:orientation="horizontal"
                 app:layout_constraintBottom_toTopOf="@id/buttonFinalizeSale"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -65,7 +70,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Total:"
-                    android:textAppearance="?attr/textAppearanceTitleLarge" />
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                 <TextView
                     android:id="@+id/textViewTotal"
@@ -85,6 +90,7 @@
                 android:paddingVertical="12dp"
                 android:text="Select Payment Method"
                 android:textColor="?attr/colorOnSurface"
+                app:cornerRadius="24dp"
                 app:icon="@drawable/ic_cash"
                 app:iconGravity="textStart"
                 app:iconTint="?attr/colorOnSurface"
@@ -92,13 +98,12 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewOrder"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:layout_constraintBottom_toTopOf="@id/buttonSelectPayment"
                 app:layout_constraintEnd_toEndOf="parent"
