@@ -1,9 +1,10 @@
 // File: PosViewModel.kt
 package de.ashaysurya.myapplication
-import androidx.lifecycle.map
+
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// NEW: A sealed class to represent the different types of items in our list.
-// This allows our list to contain both Headers and MenuItems.
+// This sealed class remains the same
 sealed class DataItem {
     data class MenuItemWrapper(val menuItem: MenuItem) : DataItem()
     data class HeaderWrapper(val categoryName: String) : DataItem()
@@ -23,8 +23,11 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: OrderRepository
     private val allMenuItems: LiveData<List<MenuItem>>
 
-    // NEW: This LiveData will hold our transformed list with headers.
-    val groupedMenuItems: LiveData<List<DataItem>>
+    // NEW: LiveData to hold the current search query from the user.
+    private val searchQuery = MutableLiveData("")
+
+    // This is now a MediatorLiveData to combine allMenuItems and searchQuery.
+    val groupedMenuItems = MediatorLiveData<List<DataItem>>()
 
     private val _currentOrder = MutableLiveData<MutableMap<MenuItem, Int>>(mutableMapOf())
     val currentOrder: LiveData<MutableMap<MenuItem, Int>> = _currentOrder
@@ -41,22 +44,39 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
         allMenuItems = repository.allMenuItems
         setPaymentMethod(PaymentMethod.CASH)
 
-        // The magic happens here! We observe the flat list from the database
-        // and transform it into a grouped list with headers.
-            groupedMenuItems = allMenuItems.map { items ->
-            val groupedList = mutableListOf<DataItem>()
-            // Group the flat list by the 'category' property.
-            val itemsByCategory = items.groupBy { it.category }
+        // Tell the MediatorLiveData which sources to observe.
+        groupedMenuItems.addSource(allMenuItems) { updateGroupedList() }
+        groupedMenuItems.addSource(searchQuery) { updateGroupedList() }
+    }
 
-            // Loop through each category and its items to build the final list.
-            for ((category, menuItems) in itemsByCategory) {
-                groupedList.add(DataItem.HeaderWrapper(category)) // Add the header
-                menuItems.forEach { menuItem ->
-                    groupedList.add(DataItem.MenuItemWrapper(menuItem)) // Add the items under that header
-                }
-            }
-            groupedList
+    // NEW: This function is called whenever the menu list or search query changes.
+    private fun updateGroupedList() {
+        val items = allMenuItems.value ?: return
+        val query = searchQuery.value ?: ""
+
+        // 1. Filter the list based on the search query.
+        val filteredItems = if (query.isEmpty()) {
+            items
+        } else {
+            items.filter { it.name.contains(query, ignoreCase = true) }
         }
+
+        // 2. Group the *filtered* list by category.
+        val groupedList = mutableListOf<DataItem>()
+        val itemsByCategory = filteredItems.groupBy { it.category }
+
+        for ((category, menuItems) in itemsByCategory) {
+            groupedList.add(DataItem.HeaderWrapper(category))
+            menuItems.forEach { menuItem ->
+                groupedList.add(DataItem.MenuItemWrapper(menuItem))
+            }
+        }
+        groupedMenuItems.value = groupedList
+    }
+
+    // NEW: Function for the Activity to call when the search text changes.
+    fun setSearchQuery(query: String) {
+        searchQuery.value = query
     }
 
     fun addItemToOrder(menuItem: MenuItem) {
