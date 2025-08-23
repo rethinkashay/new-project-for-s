@@ -2,68 +2,61 @@
 package de.ashaysurya.myapplication
 
 import android.os.Bundle
+import android.text.TextWatcher
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import de.ashaysurya.myapplication.databinding.ActivityPosBinding
-
+import kotlinx.coroutines.launch
 
 private const val ITEM_VIEW_TYPE_HEADER = 0
 private const val ITEM_VIEW_TYPE_ITEM = 1
 
-// We've temporarily removed the PaymentMethodSelectionListener for now
-class PosActivity : AppCompatActivity() {
+class PosActivity : AppCompatActivity(), PaymentMethodSelectorFragment.PaymentMethodSelectionListener {
 
     private val posViewModel: PosViewModel by viewModels()
     private lateinit var binding: ActivityPosBinding
-
-    private fun setupSearch() {
-        binding.searchEditText.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-            override fun afterTextChanged(s: android.text.Editable?) {
-                posViewModel.setSearchQuery(s.toString())
-            }
-        })
-    }
-    // We need to define these constants here for the GridLayoutManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
-
         // --- Setup Adapters ---
         val menuAdapter = MenuGridAdapter { menuItem ->
             posViewModel.addItemToOrder(menuItem)
         }
-        val orderAdapter = OrderListAdapter()
+        // UPDATED: Pass the new functions to the OrderListAdapter constructor
+        val orderAdapter = OrderListAdapter(
+            onIncrement = { menuItem -> posViewModel.incrementItemQuantity(menuItem) },
+            onDecrement = { menuItem -> posViewModel.decrementItemQuantity(menuItem) }
+        )
 
         // --- Setup RecyclerViews ---
         setupMenuRecyclerView(menuAdapter)
         binding.recyclerViewOrder.adapter = orderAdapter
         binding.recyclerViewOrder.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
 
-
         // --- Observe LiveData from the ViewModel ---
         observeViewModel(menuAdapter, orderAdapter)
 
-        // --- Setup for Click Listeners ---
+        // --- Setup for Click Listeners and Search ---
         setupClickListeners()
+        setupSearch()
+    }
+
+    override fun onPaymentMethodSelected(method: PaymentMethod) {
+        posViewModel.setPaymentMethod(method)
     }
 
     private fun observeViewModel(menuAdapter: MenuGridAdapter, orderAdapter: OrderListAdapter) {
-        // Observe the new grouped list
         posViewModel.groupedMenuItems.observe(this) { items ->
             items?.let { menuAdapter.submitList(it) }
         }
 
-        // The order list observation remains the same
         posViewModel.currentOrder.observe(this) { order ->
             order?.let {
                 orderAdapter.submitList(it.toList())
@@ -71,7 +64,16 @@ class PosActivity : AppCompatActivity() {
             }
         }
 
-        // We have temporarily removed the observers for totalAmount and selectedPaymentMethod
+        // ADDED BACK: Observe total and payment method
+        posViewModel.totalAmount.observe(this) { total ->
+            binding.textViewTotal.text = String.format("₹%.2f", total)
+        }
+
+        lifecycleScope.launch {
+            posViewModel.selectedPaymentMethod.collect { method ->
+                updatePaymentMethodButton(method)
+            }
+        }
     }
 
     private fun setupMenuRecyclerView(menuAdapter: MenuGridAdapter) {
@@ -89,19 +91,52 @@ class PosActivity : AppCompatActivity() {
         binding.recyclerViewMenu.layoutManager = layoutManager
     }
 
-    private fun setupClickListeners()  {
-        setupSearch()
+    private fun setupClickListeners() {
+        // ADDED BACK: The payment selector click listener
+        binding.buttonSelectPayment.setOnClickListener {
+            PaymentMethodSelectorFragment.newInstance()
+                .show(supportFragmentManager, PaymentMethodSelectorFragment.TAG)
+        }
+
         binding.buttonFinalizeSale.setOnClickListener {
-            // The logic for finalizeSale might change later, but this is fine for now
             val success = posViewModel.finalizeSale()
             if (success) {
                 Toast.makeText(this, "Sale Finalized!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Could not finalize sale.", Toast.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, "Please add items and select a payment method.", Snackbar.LENGTH_SHORT).show()
             }
         }
-        // We have temporarily removed the click listener for the payment button
     }
 
-    // We have temporarily removed the onPaymentMethodSelected and updatePaymentMethodButton functions
+    private fun setupSearch() {
+        binding.searchEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                posViewModel.setSearchQuery(s.toString())
+            }
+        })
+    }
+
+    // ADDED BACK: The helper function to update the payment button UI
+    private fun updatePaymentMethodButton(method: PaymentMethod?) {
+        when (method) {
+            PaymentMethod.CASH -> {
+                binding.buttonSelectPayment.text = "Cash"
+                binding.buttonSelectPayment.setIconResource(R.drawable.ic_cash)
+            }
+            PaymentMethod.CREDIT -> {
+                binding.buttonSelectPayment.text = "Credit Card"
+                binding.buttonSelectPayment.setIconResource(R.drawable.ic_credit_card)
+            }
+            PaymentMethod.UPI -> {
+                binding.buttonSelectPayment.text = "UPI"
+                binding.buttonSelectPayment.setIconResource(R.drawable.ic_upi)
+            }
+            null -> {
+                binding.buttonSelectPayment.text = "Select Payment Method"
+                binding.buttonSelectPayment.icon = null
+            }
+        }
+    }
 }

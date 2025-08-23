@@ -1,3 +1,4 @@
+// File: OrderListAdapter.kt
 package de.ashaysurya.myapplication
 
 import android.view.LayoutInflater
@@ -7,12 +8,15 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 
 /**
- * Adapter for the RecyclerView that displays the items in the current order.
+ * UPDATED: The adapter now takes two callback functions for incrementing and decrementing.
  */
-class OrderListAdapter :
-    ListAdapter<Pair<MenuItem, Int>, OrderListAdapter.OrderViewHolder>(OrderComparator()) {
+class OrderListAdapter(
+    private val onIncrement: (MenuItem) -> Unit,
+    private val onDecrement: (MenuItem) -> Unit
+) : ListAdapter<Pair<MenuItem, Int>, OrderListAdapter.OrderViewHolder>(OrderComparator()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -22,19 +26,32 @@ class OrderListAdapter :
 
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
         val (menuItem, quantity) = getItem(position)
-        holder.bind(menuItem, quantity)
+        // Pass the callbacks to the ViewHolder's bind function
+        holder.bind(menuItem, quantity, onIncrement, onDecrement)
     }
 
     class OrderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val quantityTextView: TextView = itemView.findViewById(R.id.textViewQuantity)
+        // Find all the new views from the layout
         private val nameTextView: TextView = itemView.findViewById(R.id.textViewItemName)
-        private val totalTextView: TextView = itemView.findViewById(R.id.textViewItemTotal)
+        private val priceTextView: TextView = itemView.findViewById(R.id.textViewItemPrice)
+        private val quantityTextView: TextView = itemView.findViewById(R.id.textViewQuantity)
+        private val incrementButton: MaterialButton = itemView.findViewById(R.id.buttonIncrement)
+        private val decrementButton: MaterialButton = itemView.findViewById(R.id.buttonDecrement)
 
-        fun bind(item: MenuItem, quantity: Int) {
-            quantityTextView.text = "${quantity}x"
+        fun bind(
+            item: MenuItem,
+            quantity: Int,
+            onIncrement: (MenuItem) -> Unit,
+            onDecrement: (MenuItem) -> Unit
+        ) {
             nameTextView.text = item.name
-            val itemTotal = item.price * quantity
-            totalTextView.text = String.format("₹%.2f", itemTotal)
+            // This now shows the price per item
+            priceTextView.text = String.format("₹%.2f", item.price)
+            quantityTextView.text = quantity.toString()
+
+            // Set click listeners on the new buttons
+            incrementButton.setOnClickListener { onIncrement(item) }
+            decrementButton.setOnClickListener { onDecrement(item) }
         }
     }
 
