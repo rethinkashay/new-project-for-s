@@ -1,19 +1,25 @@
+// File: DashboardRepository.kt
 package de.ashaysurya.myapplication
 
 import androidx.lifecycle.LiveData
 import java.util.Calendar
+import java.util.Date
 
-/**
- * Repository for fetching dashboard-related data from the OrderDao.
- */
 class DashboardRepository(private val orderDao: OrderDao) {
 
-    // Get the start and end of the current day in milliseconds
     private val todayStartMillis: Long
     private val todayEndMillis: Long
+    private val sevenDaysAgoStartMillis: Long
 
     init {
         val calendar = Calendar.getInstance()
+        // Set to the end of today (23:59:59)
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        calendar.set(Calendar.MILLISECOND, 999)
+        todayEndMillis = calendar.timeInMillis
+
         // Set to the beginning of today (00:00:00)
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.set(Calendar.MINUTE, 0)
@@ -21,25 +27,27 @@ class DashboardRepository(private val orderDao: OrderDao) {
         calendar.set(Calendar.MILLISECOND, 0)
         todayStartMillis = calendar.timeInMillis
 
-        // Set to the end of today (23:59:59)
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        todayEndMillis = calendar.timeInMillis
+        // Set to the beginning of the day 6 days ago (for a 7-day rolling period)
+        calendar.add(Calendar.DAY_OF_YEAR, -6)
+        sevenDaysAgoStartMillis = calendar.timeInMillis
     }
 
-    // LiveData for today's total revenue
     val todaysRevenue: LiveData<Double?> = orderDao.getRevenueForDay(todayStartMillis, todayEndMillis)
-
-    // LiveData for today's total order count
     val todaysOrderCount: LiveData<Int?> = orderDao.getOrderCountForDay(todayStartMillis, todayEndMillis)
-
-    // LiveData for the weekly sales summary
     val weeklySalesSummary: LiveData<List<DailySalesSummary>> = orderDao.getWeeklySalesSummary()
 
-    // NEW FUNCTION: A one-time fetch for all sales report data
+    // NEW: Function to get payment split for today
+    suspend fun getTodaysPaymentSplit(): List<PaymentMethodTotal> {
+        // We use Date().time for todayEndMillis to capture sales up to the current moment
+        return orderDao.getTotalsByPaymentMethod(todayStartMillis, Date().time)
+    }
+
+    // NEW: Function to get payment split for the last 7 days
+    suspend fun getWeeklyPaymentSplit(): List<PaymentMethodTotal> {
+        return orderDao.getTotalsByPaymentMethod(sevenDaysAgoStartMillis, Date().time)
+    }
+
     suspend fun getSalesReportData(): List<SalesReportItem> {
         return orderDao.getSalesReportData()
     }
-} // <-- The closing brace for the class goes here, at the very end.
+}
