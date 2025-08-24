@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_pos">
+
+    <fragment
+        android:id="@+id/nav_pos"
+        android:name="de.ashaysurya.myapplication.PosFragment"
+        android:label="Point of Sale"
+        tools:layout="@layout/fragment_pos" />
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="de.ashaysurya.myapplication.DashboardFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/nav_menu_management"
+        android:name="de.ashaysurya.myapplication.MenuManagementFragment"
+        android:label="Menu Management"
+        tools:layout="@layout/fragment_menu_management" />
+
+</navigation>
