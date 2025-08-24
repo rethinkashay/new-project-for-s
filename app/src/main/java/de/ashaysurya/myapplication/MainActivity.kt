@@ -2,6 +2,9 @@ package de.ashaysurya.myapplication
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.updatePadding
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -16,6 +19,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Add this line to call the new function
+        setupEdgeToEdge()
+
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         val navView = findViewById<NavigationView>(R.id.nav_view)
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
@@ -26,16 +32,31 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Define the top-level destinations of your app.
-        // The hamburger menu icon will be shown on these screens.
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.nav_pos, R.id.nav_dashboard, R.id.nav_menu_management
             ), drawerLayout
         )
 
-        // Connect the Toolbar and NavigationView to the NavController
         toolbar.setupWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+    }
+
+    // NEW FUNCTION
+    private fun setupEdgeToEdge() {
+        // This tells the system to let our app draw behind the status and navigation bars.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Find your main content layout
+        val mainLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { view, windowInsets ->
+            val insets = windowInsets.getInsets(
+                androidx.core.view.WindowInsetsCompat.Type.systemBars()
+            )
+            // Apply padding to the top and bottom of the view
+            view.updatePadding(top = insets.top, bottom = insets.bottom)
+            // Consume the insets so they aren't applied twice
+            androidx.core.view.WindowInsetsCompat.CONSUMED
+        }
     }
 }
