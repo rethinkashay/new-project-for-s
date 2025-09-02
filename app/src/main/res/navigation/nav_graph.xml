@@ -8,19 +8,16 @@
     <fragment
         android:id="@+id/nav_pos"
         android:name="de.ashaysurya.myapplication.PosFragment"
-        android:label="Point of Sale"
-        tools:layout="@layout/fragment_pos" />
+        android:label="Point of Sale"  tools:layout="@layout/fragment_pos" />
 
     <fragment
         android:id="@+id/nav_dashboard"
         android:name="de.ashaysurya.myapplication.DashboardFragment"
-        android:label="Dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:label="Sales Dashboard" tools:layout="@layout/fragment_dashboard" />
 
     <fragment
         android:id="@+id/nav_menu_management"
         android:name="de.ashaysurya.myapplication.MenuManagementFragment"
-        android:label="Menu Management"
-        tools:layout="@layout/fragment_menu_management" />
+        android:label="Menu Management" tools:layout="@layout/fragment_menu_management" />
 
 </navigation>

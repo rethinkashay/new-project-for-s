@@ -1,8 +1,56 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary_text</item>
+
+        <item name="colorPrimaryVariant">@color/app_background</item>
+        <item name="colorOnPrimary">@color/primary_text</item>
+        <item name="colorSecondary">@color/accent_color_primary</item>
+        <item name="colorSecondaryVariant">@color/accent_color_primary</item>
+        <item name="colorOnSecondary">@color/primary_text</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/app_background</item>
     </style>
 
     <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
+
+    <style name="Widget.App.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/divider_color</item>
+        <item name="android:textColor">@color/primary_text</item>
+        <item name="cornerRadius">24dp</item>
+    </style>
+
+    <style name="Widget.App.Button.Filled" parent="Widget.Material3.Button">
+        <item name="android:backgroundTint">@color/accent_color_secondary</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="cornerRadius">24dp</item>
+    </style>
+
+    <style name="TextAppearance.App.CardTitle" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.App.CardValue" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.App.TableCell" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="ShapeAppearance.App.Drawer" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">0dp</item>
+        <item name="cornerSizeTopLeft">0dp</item>
+        <item name="cornerSizeBottomRight">16dp</item>
+        <item name="cornerSizeBottomLeft">16dp</item>
+    </style>
+
+    <style name="Widget.App.NavigationView" parent="Widget.Material3.NavigationView">
+        <item name="itemIconTint">@color/black</item>
+        <item name="itemTextColor">@color/black</item>
+        <item name="itemBackground">@drawable/drawer_item_background_stateful</item>
+        <item name="itemHorizontalPadding">24dp</item>
+        <item name="itemVerticalPadding">16dp</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.Drawer</item>
+    </style>
 </resources>

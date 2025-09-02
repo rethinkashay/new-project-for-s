@@ -7,29 +7,42 @@
     android:background="#F5F5F5"
     tools:context=".PosActivity">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/searchLayout"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    <!-- This is the new, more visible search bar WITH CONSTRAINTS -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/searchCardView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
-        android:hint="Search menu items..."
-        app:boxCornerRadiusBottomEnd="24dp"
-        app:boxCornerRadiusBottomStart="24dp"
-        app:boxCornerRadiusTopEnd="24dp"
-        app:boxCornerRadiusTopStart="24dp"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:startIconDrawable="@android:drawable/ic_menu_search">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/searchEditText"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/searchLayout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:hint="Search menu items..."
+            app:boxBackgroundColor="#F0F0F0"
+            app:boxCornerRadiusBottomEnd="28dp"
+            app:boxCornerRadiusBottomStart="28dp"
+            app:boxCornerRadiusTopEnd="28dp"
+            app:boxCornerRadiusTopStart="28dp"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:startIconDrawable="@android:drawable/ic_menu_search">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/searchEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardViewOrder"
@@ -97,13 +110,12 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonSelectPayment"
-                style="?attr/materialButtonOutlinedStyle"
+                style="@style/Widget.App.Button.Outlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:paddingVertical="12dp"
-                android:text="Select Payment Method"
-                app:cornerRadius="24dp"
+                android:text="Cash"
                 app:icon="@drawable/ic_cash"
                 app:layout_constraintTop_toBottomOf="@id/layoutTotal"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -111,13 +123,13 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonFinalizeSale"
+                style="@style/Widget.App.Button.Filled"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:paddingVertical="12dp"
                 android:text="Finalize Sale"
                 android:textSize="16sp"
-                app:cornerRadius="24dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -136,7 +148,7 @@
         app:layout_constraintBottom_toTopOf="@id/cardViewOrder"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchLayout"
+        app:layout_constraintTop_toBottomOf="@id/searchCardView"
         tools:listitem="@layout/grid_item_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

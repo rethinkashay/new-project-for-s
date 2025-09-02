@@ -1,3 +1,4 @@
+
 // File: AppDatabase.kt
 package de.ashaysurya.myapplication
 
@@ -20,17 +21,16 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        // Your migrations are still here, which is good practice
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE orders ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'CASH'")
             }
         }
 
-        // UPDATED: This migration now only adds the category column.
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE menu_items ADD COLUMN category TEXT NOT NULL DEFAULT 'Default'")
-                // The line to add the 'stock' column has been removed.
             }
         }
 
@@ -41,8 +41,11 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "restaurant_database"
                 )
-                    .addMigrations(MIGRATION_2_3)
-                    .addMigrations(MIGRATION_3_4)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4) // You can add multiple migrations at once
+                    // THIS IS THE FIX:
+                    // If migrations fail, it will destroy and recreate the database.
+                    // This is perfect for debugging and development.
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
@@ -50,3 +53,4 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
+

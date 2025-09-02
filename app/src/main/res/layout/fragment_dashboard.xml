@@ -8,22 +8,18 @@
     android:padding="16dp"
     tools:context=".DashboardActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sales Dashboard"
-        android:textAppearance="?attr/textAppearanceHeadlineMedium" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="8dp">
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp">
+            android:layout_marginEnd="8dp"
+            app:cardElevation="4dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -32,21 +28,24 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    style="@style/TextAppearance.App.CardTitle"
                     android:text="Today's Revenue" />
                 <TextView
                     android:id="@+id/textViewTodaysRevenue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                    tools:text="₹0.00" />
+                    style="@style/TextAppearance.App.CardValue"
+                    tools:text="₹200.00" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp">
+            android:layout_marginStart="8dp"
+            app:cardElevation="4dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -55,14 +54,15 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    style="@style/TextAppearance.App.CardTitle"
                     android:text="Today's Orders" />
                 <TextView
                     android:id="@+id/textViewTodaysOrders"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                    tools:text="0" />
+                    style="@style/TextAppearance.App.CardValue"
+                    tools:text="1" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
@@ -82,139 +82,183 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Payment Split"
-                android:textAppearance="?attr/textAppearanceTitleMedium" />
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
                 <TextView
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Method"
-                    android:textStyle="bold"/>
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
                     android:text="Today"
-                    android:textStyle="bold"/>
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
                     android:text="Last 7 Days"
-                    android:textStyle="bold"/>
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
             </LinearLayout>
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider"
-                android:layout_marginTop="4dp"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:orientation="horizontal">
                 <TextView
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Cash"/>
+                    android:text="Cash"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
                     android:id="@+id/textViewTodayCash"
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    tools:text="₹100.00"/>
+                    tools:text="₹200.00"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
                     android:id="@+id/textViewWeeklyCash"
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    tools:text="₹700.00"/>
+                    tools:text="₹200.00"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
             </LinearLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:orientation="horizontal">
                 <TextView
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Credit"/>
+                    android:text="Credit"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
                     android:id="@+id/textViewTodayCredit"
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    tools:text="₹50.00"/>
+                    tools:text="₹0.00"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
                     android:id="@+id/textViewWeeklyCredit"
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    tools:text="₹350.00"/>
+                    tools:text="₹0.00"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
             </LinearLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:orientation="horizontal">
                 <TextView
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="UPI"/>
+                    android:text="UPI"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
                     android:id="@+id/textViewTodayUpi"
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    tools:text="₹200.00"/>
+                    tools:text="₹0.00"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
                 <TextView
                     android:id="@+id/textViewWeeklyUpi"
+                    style="@style/TextAppearance.App.TableCell"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    tools:text="₹1400.00"/>
+                    tools:text="₹0.00"
+                    android:padding="8dp"
+                    android:background="@drawable/table_cell_border"/>
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Weekly Summary"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:layout_marginTop="24dp"/>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewWeeklySummary"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
-        tools:listitem="@layout/summary_list_item" />
+        android:layout_marginTop="16dp">
 
-    <Button
-        android:id="@+id/buttonExport"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Export Sales Data to Excel"
-        android:layout_marginTop="16dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Weekly Summary"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textStyle="bold"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewWeeklySummary"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="8dp"
+                tools:listitem="@layout/summary_list_item" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonExport"
+                style="@style/Widget.App.Button.Filled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Export Sales Data to Excel"
+                android:layout_marginTop="16dp"/>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>

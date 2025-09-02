@@ -95,6 +95,7 @@ class PosFragment : Fragment(), PaymentMethodSelectorFragment.PaymentMethodSelec
 
     private fun setupClickListeners() {
         binding.buttonSelectPayment.setOnClickListener {
+            // Use parentFragmentManager to launch a dialog from a Fragment
             PaymentMethodSelectorFragment.newInstance()
                 .show(parentFragmentManager, PaymentMethodSelectorFragment.TAG)
         }
@@ -108,7 +109,6 @@ class PosFragment : Fragment(), PaymentMethodSelectorFragment.PaymentMethodSelec
             }
         }
     }
-
     private fun setupSearch() {
         binding.searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

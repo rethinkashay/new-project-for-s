@@ -16,18 +16,18 @@ class PaymentMethodSelectorFragment : BottomSheetDialogFragment() {
 
     private var listener: PaymentMethodSelectionListener? = null
 
-    // This interface is the communication bridge to our PosActivity
     interface PaymentMethodSelectionListener {
         fun onPaymentMethodSelected(method: PaymentMethod)
     }
 
+    // THIS IS THE CORRECTED FUNCTION
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        // Ensure the host activity implements the listener interface
-        if (context is PaymentMethodSelectionListener) {
-            listener = context
-        } else {
-            throw RuntimeException("$context must implement PaymentMethodSelectionListener")
+        // This is the correct way to get the listener from a NavHostFragment setup
+        listener = parentFragmentManager.primaryNavigationFragment as? PaymentMethodSelectionListener
+
+        if (listener == null) {
+            throw RuntimeException("$context must have a primary navigation fragment that implements PaymentMethodSelectionListener")
         }
     }
 
@@ -67,6 +67,8 @@ class PaymentMethodSelectorFragment : BottomSheetDialogFragment() {
         super.onDetach()
         listener = null
     }
+
+
 
     companion object {
         const val TAG = "PaymentMethodSelectorFragment"
