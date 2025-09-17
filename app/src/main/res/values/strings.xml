@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Salezto</string>
     <string name="add_new_menu_item" />
     <string name="view_dashboard">View Dashboard</string>
     <string name="go_to_pos">Go to POS</string>

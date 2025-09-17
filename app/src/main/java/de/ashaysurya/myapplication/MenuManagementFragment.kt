@@ -13,11 +13,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import androidx.lifecycle.viewModelScope
 import de.ashaysurya.myapplication.databinding.FragmentMenuManagementBinding
+import de.ashaysurya.myapplication.network.RetrofitInstance
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import java.io.InputStream
 
 class MenuManagementFragment : Fragment() {
 
@@ -27,68 +31,74 @@ class MenuManagementFragment : Fragment() {
 
     private var tempImageUri: Uri? = null
 
-    // Launcher for getting an image from the gallery
+    // Launchers for picking/taking photos (no changes here)
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { processImage(it) }
     }
 
-    // Launcher for taking a picture with the camera
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success: Boolean ->
-        if (success) {
-            tempImageUri?.let { processImage(it) }
-        }
+        if (success) { tempImageUri?.let { processImage(it) } }
     }
 
-    // Launcher for requesting camera permission
     private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        if (isGranted) {
-            launchCamera()
-        } else {
-            Toast.makeText(requireContext(), "Camera permission is required to take a picture", Toast.LENGTH_SHORT).show()
+        if (isGranted) { launchCamera() } else {
+            Toast.makeText(requireContext(), "Camera permission is required", Toast.LENGTH_SHORT).show()
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMenuManagementBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val adapter = MenuListAdapter { menuItem ->
-            showOptionsDialog(menuItem)
-        }
+        val adapter = MenuListAdapter { menuItem -> showOptionsDialog(menuItem) }
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+        menuViewModel.allMenuItems.observe(viewLifecycleOwner) { items -> items?.let { adapter.submitList(it) } }
+        binding.fab.setOnClickListener { showAddItemDialog() }
+        binding.fabScan.setOnClickListener { showImageSourceDialog() }
+    }
 
-        menuViewModel.allMenuItems.observe(viewLifecycleOwner) { items ->
-            items?.let { adapter.submitList(it) }
+    // --- THIS IS THE NEW CORE LOGIC THAT CALLS YOUR BACKEND ---
+    private fun processImage(uri: Uri) {
+        val imagePart = uriToMultipartBodyPart(uri)
+        if (imagePart == null) {
+            Toast.makeText(requireContext(), "Could not process the image file.", Toast.LENGTH_SHORT).show()
+            return
         }
+        Toast.makeText(requireContext(), "Uploading and processing image...", Toast.LENGTH_SHORT).show()
 
-        binding.fab.setOnClickListener {
-            showAddItemDialog()
-        }
-
-        binding.fabScan.setOnClickListener {
-            showImageSourceDialog()
+        menuViewModel.viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.uploadImage(imagePart)
+                if (response.isSuccessful && response.body() != null) {
+                    val menuItems = response.body()!!
+                    if (menuItems.isNotEmpty()) {
+                        // Use the new, powerful confirmation dialog
+                        showConfirmItemsDialog(menuItems)
+                    } else {
+                        Toast.makeText(requireContext(), "No menu items found in the image.", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "Error: ${response.message()}", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Network Connection Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
     private fun showImageSourceDialog() {
-        val options = arrayOf("Take Photo", "Choose from Gallery")
         AlertDialog.Builder(requireContext())
             .setTitle("Scan a Menu")
-            .setItems(options) { _, which ->
+            .setItems(arrayOf("Take Photo", "Choose from Gallery")) { _, which ->
                 when (which) {
                     0 -> requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                     1 -> pickImageLauncher.launch("image/*")
                 }
-            }
-            .show()
+            }.show()
     }
 
     private fun launchCamera() {
@@ -96,114 +106,58 @@ class MenuManagementFragment : Fragment() {
             createNewFile()
             deleteOnExit()
         }
-
-        tempImageUri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.provider",
-            tmpFile
-        )
+        tempImageUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", tmpFile)
         takePictureLauncher.launch(tempImageUri)
     }
 
-    private fun processImage(uri: Uri) {
-        try {
-            val image = InputImage.fromFilePath(requireContext(), uri)
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    // --- NEW HELPER FUNCTION TO PREPARE THE FILE FOR UPLOAD ---
+    private fun uriToMultipartBodyPart(uri: Uri): MultipartBody.Part? {
+        return try {
+            val inputStream = requireContext().contentResolver.openInputStream(uri)
+            val fileBytes = inputStream?.readBytes()
+            inputStream?.close()
 
-            recognizer.process(image)
-                .addOnSuccessListener { visionText ->
-                    // UPDATED: Instead of just showing the text, we now parse it.
-                    val parsedItems = parseMenuText(visionText.text)
-                    if (parsedItems.isNotEmpty()) {
-                        showConfirmItemsDialog(parsedItems)
-                    } else {
-                        Toast.makeText(requireContext(), "Could not find any menu items.", Toast.LENGTH_LONG).show()
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(requireContext(), "Text recognition failed: ${e.message}", Toast.LENGTH_LONG).show()
-                }
+            if (fileBytes != null) {
+                val requestFile = fileBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("image", "image.jpg", requestFile)
+            } else {
+                null
+            }
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(requireContext(), "Failed to process image.", Toast.LENGTH_SHORT).show()
+            null
         }
     }
 
-    private fun parseMenuText(text: String): List<MenuItem> {
-        val menuItems = mutableListOf<MenuItem>()
-        // A more robust regex to find prices, including those with commas.
-        val priceRegex = Regex("(?<=\\s|^)[₹]?[\\s]?(\\d{2,4}(?:[.,]\\d{2})?)(?=\\s|$)")
-        val lines = text.split("\n").filter { it.isNotBlank() }
-
-        val potentialItems = mutableMapOf<Int, String>() // Line number to potential item name
-        val potentialPrices = mutableMapOf<Int, Double>() // Line number to price
-
-        // First pass: Identify all potential names and prices by line number
-        lines.forEachIndexed { index, line ->
-            val priceMatch = priceRegex.find(line)
-            // A line is a potential price if it contains a price and not too much other text
-            if (priceMatch != null && line.length < 20) {
-                priceMatch.groups[1]?.value?.toDoubleOrNull()?.let {
-                    potentialPrices[index] = it
-                }
-            }
-            // A line is a potential name if it's mostly letters and not just a short number
-            if (line.any { it.isLetter() } && !line.matches(Regex("^\\d{1,3}$"))) {
-                potentialItems[index] = line.substringBefore("Rs").trim()
-            }
-        }
-
-        // Second pass: Associate prices with the nearest item name above them
-        potentialPrices.forEach { (lineNum, price) ->
-            // Look for the item name on the same line, or the closest one on a line above
-            var bestItemLine = -1
-            for (itemLineNum in potentialItems.keys) {
-                if (itemLineNum <= lineNum && itemLineNum > bestItemLine) {
-                    bestItemLine = itemLineNum
-                }
-            }
-
-            if (bestItemLine != -1) {
-                val name = potentialItems[bestItemLine]
-                if (name != null && name.isNotEmpty()) {
-                    menuItems.add(MenuItem(name = name, price = price, category = "Scanned"))
-                }
-            }
-        }
-
-        // Return only unique items
-        return menuItems.distinctBy { it.name }
-    }
-
-    // NEW: This function shows the user the items we found and asks for confirmation.
+    // --- NEW DIALOG TO CONFIRM AND SAVE PARSED ITEMS ---
     private fun showConfirmItemsDialog(items: List<MenuItem>) {
         val itemStrings = items.map { "${it.name} - ₹${it.price}" }.toTypedArray()
-
         AlertDialog.Builder(requireContext())
             .setTitle("Found ${items.size} Menu Items")
-            .setItems(itemStrings, null) // Display items, but don't do anything on click
+            .setItems(itemStrings, null) // Display items, not clickable
             .setPositiveButton("Add to Menu") { _, _ ->
-                items.forEach { menuViewModel.insert(it) }
-                Toast.makeText(requireContext(), "${items.size} items added to your menu.", Toast.LENGTH_LONG).show()
+                items.forEach { menuItem ->
+                    // The item from the backend has no category, so we add one.
+                    val itemToInsert = menuItem.copy(category = "Scanned")
+                    menuViewModel.insert(itemToInsert)
+                }
+                Toast.makeText(requireContext(), "${items.size} items added.", Toast.LENGTH_LONG).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-
-    // --- Your original dialog functions are below ---
+    // --- DIALOG FUNCTIONS FOR MANUAL EDITING (UNCHANGED) ---
 
     private fun showOptionsDialog(menuItem: MenuItem) {
-        val options = arrayOf("Edit", "Delete")
         AlertDialog.Builder(requireContext())
             .setTitle(menuItem.name)
-            .setItems(options) { _, which ->
+            .setItems(arrayOf("Edit", "Delete")) { _, which ->
                 when (which) {
                     0 -> showEditItemDialog(menuItem)
                     1 -> showDeleteConfirmationDialog(menuItem)
                 }
-            }
-            .show()
+            }.show()
     }
 
     private fun showEditItemDialog(menuItem: MenuItem) {
@@ -212,24 +166,20 @@ class MenuManagementFragment : Fragment() {
         val editTextName = dialogLayout.findViewById<EditText>(R.id.editTextName)
         val editTextPrice = dialogLayout.findViewById<EditText>(R.id.editTextPrice)
         val editTextCategory = dialogLayout.findViewById<EditText>(R.id.editTextCategory)
-
         editTextName.setText(menuItem.name)
         editTextPrice.setText(menuItem.price.toString())
         editTextCategory.setText(menuItem.category)
-
         builder.setTitle("Edit Menu Item")
             .setView(dialogLayout)
-            .setPositiveButton("Save") { dialog, _ ->
+            .setPositiveButton("Save") { _, _ ->
                 val name = editTextName.text.toString().trim()
                 val priceString = editTextPrice.text.toString().trim()
                 val category = editTextCategory.text.toString().trim()
-
                 if (name.isNotEmpty() && priceString.isNotEmpty() && category.isNotEmpty()) {
                     val price = priceString.toDoubleOrNull()
                     if (price != null) {
                         val updatedItem = menuItem.copy(name = name, price = price, category = category)
                         menuViewModel.update(updatedItem)
-                        dialog.dismiss()
                     } else {
                         Toast.makeText(requireContext(), "Please enter a valid price", Toast.LENGTH_SHORT).show()
                     }
@@ -258,20 +208,17 @@ class MenuManagementFragment : Fragment() {
         val editTextName = dialogLayout.findViewById<EditText>(R.id.editTextName)
         val editTextPrice = dialogLayout.findViewById<EditText>(R.id.editTextPrice)
         val editTextCategory = dialogLayout.findViewById<EditText>(R.id.editTextCategory)
-
         builder.setTitle("Add New Menu Item")
             .setView(dialogLayout)
-            .setPositiveButton("Add") { dialog, _ ->
+            .setPositiveButton("Add") { _, _ ->
                 val name = editTextName.text.toString().trim()
                 val priceString = editTextPrice.text.toString().trim()
                 val category = editTextCategory.text.toString().trim()
-
                 if (name.isNotEmpty() && priceString.isNotEmpty() && category.isNotEmpty()) {
                     val price = priceString.toDoubleOrNull()
                     if (price != null) {
                         val newItem = MenuItem(name = name, price = price, category = category)
                         menuViewModel.insert(newItem)
-                        dialog.dismiss()
                     } else {
                         Toast.makeText(requireContext(), "Please enter a valid price", Toast.LENGTH_SHORT).show()
                     }

@@ -53,6 +53,15 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.text.recognition)
+    implementation("com.google.ai.client.generativeai:generativeai:0.3.0")
+    // For Retrofit - the networking library
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+
+// For converting JSON data into Kotlin objects
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+// For logging network requests, which is very helpful for debugging
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit.v115)
     androidTestImplementation(libs.androidx.espresso.core.v351)
